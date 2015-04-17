@@ -1,4 +1,5 @@
 exception DomainError of string * string * string ;;
+exception UnknownFunction of string ;;
 
 let do_to_int f n = f (float_of_int n) ;;
 
@@ -151,28 +152,48 @@ let pow = function
 | Data.Complex (a, b), Data.Float n -> Data.Complex (n /. a, b)
 | Data.Complex (a, b), Data.Complex (x, y) -> Data.Complex (a /. x, b /. y) *) ;;
 
-let rec execute = function
+let rec execute env = function
 | Data.Leaf n -> n
-| Data.Op (l, o, r) -> execute (Data.Leaf (execute_operation l o r))
-| Data.Func (f, x) -> execute (Data.Leaf (apply_function f (execute x)))
+| Data.Op (l, o, r) -> execute env (Data.Leaf (execute_operation env l o r))
+| Data.Func (f, args) -> execute env (Data.Leaf (apply_function env f (List.map (execute env) args)))
 
-and apply_function f n = match f with
-| Data.Sqrt -> sqrt n
-| Data.Cos -> cos n
-| Data.Sin -> sin n
-| Data.Tan -> tan n
-| Data.Abs -> abs n
-| Data.Ln -> ln n
-| Data.Log10 -> log10 n
-| Data.Exp -> exp n
-| Data.Conj -> conj n
-| Data.Re -> re n
-| Data.Im -> im n
+and apply_function env f args = match f with
+| Data.Sqrt -> sqrt (List.hd args)
+| Data.Cos -> cos (List.hd args)
+| Data.Sin -> sin (List.hd args)
+| Data.Tan -> tan (List.hd args)
+| Data.Abs -> abs (List.hd args)
+| Data.Ln -> ln (List.hd args)
+| Data.Log10 -> log10 (List.hd args)
+| Data.Exp -> exp (List.hd args)
+| Data.Conj -> conj (List.hd args)
+| Data.Re -> re (List.hd args)
+| Data.Im -> im (List.hd args)
+| Data.Custom f -> apply_custom_function env f args
 
-and execute_operation l o r = match o with
-| Data.Add -> add (execute l, execute r)
-| Data.Min -> min (execute l, execute r)
-| Data.Mul -> mul (execute l, execute r)
-| Data.Div -> div (execute l, execute r)
-| Data.Mod -> mod_ (execute l, execute r)
-| Data.Pow -> pow (execute l, execute r) ;;
+and execute_operation env l o r = match o with
+| Data.Add -> add (execute env l, execute env r)
+| Data.Min -> min (execute env l, execute env r)
+| Data.Mul -> mul (execute env l, execute env r)
+| Data.Div -> div (execute env l, execute env r)
+| Data.Mod -> mod_ (execute env l, execute env r)
+| Data.Pow -> pow (execute env l, execute env r)
+
+(* Coming soon *)
+and apply_custom_function env f args =
+  try
+    let func = List.find (fun (fdata : Data.data) -> fdata.name = f) env
+    in let rec aux formula = function
+    | [] -> execute env formula
+    | (name, value)::t -> let new_formula = reduce name value formula
+      in aux new_formula t
+
+    and reduce name value = function
+    | Data.Func (Data.Custom f, _) as func -> if f = name then Data.Leaf value else func
+    | Data.Op (l, o, r) -> Data.Op (reduce name value l, o, reduce name value r)
+    | leaf -> leaf
+  
+    in let ctx = List.map2 (fun a b -> a, b) func.args args
+    in aux func.formula ctx
+  with
+    Not_found -> raise (UnknownFunction f) ;;

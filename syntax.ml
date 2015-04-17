@@ -1,18 +1,28 @@
 open Genlex ;;
 
 let rec parse = parser
-| [< 'Ident "sqrt" ; x = parse >] -> Data.Func (Sqrt, x)
-| [< 'Ident "cos" ; x = parse >] -> Data.Func (Cos, x)
-| [< 'Ident "sin" ; x = parse >] -> Data.Func (Sin, x)
-| [< 'Ident "tan" ; x = parse >] -> Data.Func (Tan, x)
-| [< 'Ident "ln" ; x = parse >] -> Data.Func (Ln, x)
-| [< 'Ident "log" ; x = parse >] -> Data.Func (Log10, x)
-| [< 'Ident "exp" ; x = parse >] -> Data.Func (Exp, x)
-| [< 'Ident "abs" ; x = parse >] -> Data.Func (Abs, x)
-| [< 'Ident "conj" ; x = parse >] -> Data.Func (Conj, x)
-| [< 'Ident "Re" ; x = parse >] -> Data.Func (Re, x)
-| [< 'Ident "Im" ; x = parse >] -> Data.Func (Im, x)
+| [< 'Ident "sqrt" ; x = parse >] -> Data.Func (Sqrt, [x])
+| [< 'Ident "cos" ; x = parse >] -> Data.Func (Cos, [x])
+| [< 'Ident "sin" ; x = parse >] -> Data.Func (Sin, [x])
+| [< 'Ident "tan" ; x = parse >] -> Data.Func (Tan, [x])
+| [< 'Ident "ln" ; x = parse >] -> Data.Func (Ln, [x])
+| [< 'Ident "log" ; x = parse >] -> Data.Func (Log10, [x])
+| [< 'Ident "exp" ; x = parse >] -> Data.Func (Exp, [x])
+| [< 'Ident "abs" ; x = parse >] -> Data.Func (Abs, [x])
+| [< 'Ident "conj" ; x = parse >] -> Data.Func (Conj, [x])
+| [< 'Ident "Re" ; x = parse >] -> Data.Func (Re, [x])
+| [< 'Ident "Im" ; x = parse >] -> Data.Func (Im, [x])
+| [< 'Ident f ; args = arguments >] -> Data.Func (Custom f, args)
 | [< s = op_low >] -> s
+
+and arguments =
+  let rec aux = parser
+  | [< 'Kwd "," ; formula = parse ; s >] -> formula :: aux s
+  | [< >] -> []
+
+  in parser 
+  | [< formula = parse ; s >] -> formula :: aux s
+  | [< >] -> []
 
 and op_low =
   let rec aux left = parser

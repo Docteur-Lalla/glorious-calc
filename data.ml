@@ -16,6 +16,7 @@ type func =
 | Conj
 | Re
 | Im
+| Custom of string
 ;;
 
 type operator =
@@ -30,5 +31,13 @@ type operator =
 type ast =
 | Leaf of number
 | Op of ast * operator * ast
-| Func of func * ast
+| Func of func * ast list
 ;;
+
+(* Data type holding a custom function *)
+type data =
+{
+  name : string ;
+  args : string list ;
+  formula : ast
+} ;;
