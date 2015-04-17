@@ -1,5 +1,6 @@
 exception DomainError of string * string * string ;;
 exception UnknownFunction of string ;;
+exception WrongArgumentNumber of string * int * int ;;
 
 let do_to_int f n = f (float_of_int n) ;;
 
@@ -189,11 +190,16 @@ and apply_custom_function env f args =
       in aux new_formula t
 
     and reduce name value = function
-    | Data.Func (Data.Custom f, _) as func -> if f = name then Data.Leaf value else func
+    | Data.Func (Data.Custom f, _) when f = name -> Data.Leaf value
+    | Data.Func (f, args) -> let new_args = List.map (reduce name value) args
+      in Data.Func (f, new_args)
     | Data.Op (l, o, r) -> Data.Op (reduce name value l, o, reduce name value r)
     | leaf -> leaf
   
-    in let ctx = List.map2 (fun a b -> a, b) func.args args
-    in aux func.formula ctx
+    in let exp = List.length func.args and got = List.length args
+    in if exp <> got
+      then raise (WrongArgumentNumber (func.name, exp, got))
+      else let ctx = List.map2 (fun a b -> a, b) func.args args
+        in aux func.formula ctx
   with
     Not_found -> raise (UnknownFunction f) ;;
