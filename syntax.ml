@@ -2,15 +2,18 @@ open Genlex ;;
 
 exception SyntaxError of string ;;
 
-let missing_separator s = "missing '" ^ s ^ "' between functions declarations and the formula"
-and missing_formula = "missing formula after the functions declarations" ;;
   
 
-let rec parse = parser
-| [< decls = decl_list ;
-  'Kwd ":" ?? missing_separator ":" ;
-  formula = parse_formula ?? missing_formula >] -> (decls, formula)
-| [< formula = parse_formula >] -> ([], formula)
+let rec parse =
+  let missing_separator s = "missing '" ^ s ^ "' between functions declarations and the formula"
+  and missing_formula = "missing formula after the functions declarations"
+
+  in parser
+  | [< 'Kwd "let" ; decls = decl_list ;
+    'Kwd ":" ?? missing_separator ":" ;
+    formula = parse_formula ?? missing_formula >] -> (decls, formula)
+  | [< formula = parse_formula >] -> ([], formula)
+  | [< >] -> raise (SyntaxError "unable to parse a proper formula")
 
 and parse_formula = parser [< s = op_low >] -> s
 
@@ -21,9 +24,12 @@ and arguments =
 
   in parser [< formula = parse_formula ; s >] -> formula :: aux s
 
-and decl = parser
-  [< 'Ident fname ; args = parameters ; 'Kwd "=" ; formula = parse_formula >] ->
-  { Data.name = fname ; Data.args = args ; Data.formula = formula }
+and decl =
+  let eq_op_missing fname = "no '=' operator in " ^ fname ^ " declaration"
+
+  in parser
+    [< 'Ident fname ; args = parameters ; 'Kwd "=" ?? eq_op_missing fname ; formula = parse_formula >] ->
+    { Data.name = fname ; Data.args = args ; Data.formula = formula }
 
 and parameters = parser
 | [< 'Ident id ; s >] -> id :: parameters s
@@ -62,6 +68,8 @@ and op_pow =
 
 and misc = parser
 | [< 'Kwd "(" ; x = parse_formula ; 'Kwd ")" >] -> x
+| [< 'Kwd "[" ; x = parse_formula ; 'Kwd "]" >] -> x
+| [< 'Kwd "{" ; x = parse_formula ; 'Kwd "}" >] -> x
 | [< 'Float f ; s >] -> parse_float f s
 | [< 'Int i ; s >] -> parse_int i s
 | [< 'Ident "e" >] -> Data.Leaf (Data.Float (Pervasives.exp 1.0))
@@ -79,7 +87,7 @@ and parse_function = parser
 | [< 'Ident "exp" ; x = parse_formula >] -> Data.Func (Exp, [x])
 | [< 'Ident "abs" ; x = parse_formula >] -> Data.Func (Abs, [x])
 | [< 'Ident "conj" ; x = parse_formula >] -> Data.Func (Conj, [x])
-| [< 'Ident "Re" ; x = parse_formula ?? missing_formula >] -> Data.Func (Re, [x])
+| [< 'Ident "Re" ; x = parse_formula >] -> Data.Func (Re, [x])
 | [< 'Ident "Im" ; x = parse_formula >] -> Data.Func (Im, [x])
 | [< 'Ident id ; s >] -> parse_custom_function id s
 

@@ -1,4 +1,4 @@
-let kwds = [ "+" ; "-" ; "*" ; "/" ; "(" ; ")" ; "^" ; "mod" ; "," ; "=" ; ":" ] ;;
+let kwds = [ "+" ; "-" ; "*" ; "/" ; "(" ; ")" ; "^" ; "mod" ; "," ; "=" ; ":" ; "let" ; "[" ; "]" ; "{" ; "}" ] ;;
 let args = List.tl (Array.to_list Sys.argv) ;;
 
 let concat a b = a ^ " " ^ b ;;
