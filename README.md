@@ -32,7 +32,7 @@ Some custom functions can be created by defining a context *before* the formula.
 This is made due to the following syntax :
 
 ```bash
-*function-name* *argument-list* = *formula* : *formula
+*function-name* *argument-list* = *formula* : *formula*
 $ calc f x = 5i + x, y = 8 : f y
 ```
 
@@ -40,5 +40,5 @@ Each declaration must be separated of the following one using a comma.
 Functions that take several arguments are called like the others but with their arguments separated by a comma :
 
 ```bash
-$ calc f x y = 2 + x * y : f 4, 5
+$ calc f x y = 2 + x / y : f 4, 5
 ```

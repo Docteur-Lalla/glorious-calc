@@ -10,6 +10,7 @@ let () =
     in let (env, ast) = Syntax.parse tokens
     in Exec.print_number (Exec.execute env ast) ; print_newline ()
   with
+  | Syntax.SyntaxError s -> prerr_endline ("Syntax error : " ^ s)
   | Exec.DomainError (f, exp, has) ->
     prerr_endline ("In function " ^ f ^ " : expected a " ^ exp ^ " and got a " ^ has)
   | Exec.UnknownFunction f -> prerr_endline ("Unknown function named " ^ f)
@@ -19,4 +20,5 @@ let () =
     in let sarg = if exp = 0 || exp = 1 then " argument" else " arguments"
     in prerr_endline (str ^ sarg ^ " but called with " ^ sgot)
   | Stream.Failure -> prerr_endline "Syntax error"
+  | Stream.Error e when e <> "" -> prerr_endline ("Syntax error : " ^ e)
   (*| _ -> prerr_endline "Unknown error appeared"*) ;;
