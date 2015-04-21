@@ -73,7 +73,8 @@ and misc = parser
 | [< 'Ident "e" >] -> Data.Leaf (Data.Float (Pervasives.exp 1.0))
 | [< 'Ident "i" >] -> Data.Leaf (Data.Complex (0.0, 1.0))
 | [< 'Ident id ; s >] -> (parse_function [< 'Ident id ; s >])
-| [< 'Kwd "-" ; 'Ident "i" >] -> Data.Leaf (Data.Complex (0.0, -1.0))
+| [< 'Kwd "-" ; x = parse_formula >] -> Data.Op (Data.Leaf (Data.Integer 0), Min, x)
+(*| [< 'Kwd "-" ; 'Ident "i" >] -> Data.Leaf (Data.Complex (0.0, -1.0))*)
 
 and parse_function = parser
 | [< 'Ident "sqrt" ; x = parse_formula >] -> Data.Func (Sqrt, [x])
