@@ -2,15 +2,13 @@ open Genlex ;;
 
 exception SyntaxError of string ;;
 
-  
-
 let rec parse =
-  let missing_separator s = "missing '" ^ s ^ "' between functions declarations and the formula"
+  let missing_separator = "missing ':' between functions declarations and the formula"
   and missing_formula = "missing formula after the functions declarations"
 
   in parser
   | [< 'Kwd "let" ; decls = decl_list ;
-    'Kwd ":" ?? missing_separator ":" ;
+    'Kwd ":" ?? missing_separator ;
     formula = parse_formula ?? missing_formula >] -> (decls, formula)
   | [< formula = parse_formula >] -> ([], formula)
   | [< >] -> raise (SyntaxError "unable to parse a proper formula")

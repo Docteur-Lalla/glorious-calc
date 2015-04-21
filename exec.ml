@@ -2,8 +2,10 @@ exception DomainError of string * string * string ;;
 exception UnknownFunction of string ;;
 exception WrongArgumentNumber of string * int * int ;;
 
+(* Shortcut function *)
 let do_to_int f n = f (float_of_int n) ;;
 
+(* Built-in functions *)
 let sqrt = function
 | Data.Integer n -> Data.Float (do_to_int Pervasives.sqrt n)
 | Data.Float f -> Data.Float (Pervasives.sqrt f)
@@ -59,6 +61,14 @@ let im = function
 | Data.Float f -> Data.Float 0.0
 | Data.Complex (_,i) -> Data.Float i ;;
 
+(*
+ * Print a number with some improvements :
+ *   A round float is printed as an integer (1.0 -> 1)
+ *   A complex with no real part has only its imaginary part printed
+ *   Same idea for real complexes
+ *   '1.0i' is printed 'i' and '-1.0i' is printed '-i'
+ *   'x + -yi' is printed 'x - yi'
+ *)
 let rec print_number = function
 | Data.Integer n -> print_int n
 | Data.Float f when f = floor f -> print_int (int_of_float f)
@@ -77,9 +87,16 @@ let rec print_number = function
       print_number (Data.Float (Pervasives.abs_float i)) ;
       print_string "i"
     end
-  | r, i -> print_number (Data.Float r) ; print_string " + " ; print_number (Data.Float i) ; print_string "i"
+  | r, i ->
+    begin
+      print_number (Data.Float r) ;
+      print_string " + " ;
+      print_number (Data.Float i) ;
+      print_string "i"
+    end
   end ;;
 
+(* Operators *)
 let add = function
 | Data.Integer a, Data.Integer b -> Data.Integer (a + b)
 | Data.Float a, Data.Float b -> Data.Float (a +. b)
@@ -146,13 +163,9 @@ let pow = function
 | Data.Integer a, Data.Integer b -> Data.Integer (int_of_float (float_of_int a ** float_of_int b))
 | Data.Float a, Data.Float b -> Data.Float (a ** b)
 | Data.Integer a, Data.Float b -> Data.Float (float_of_int a ** b)
-| Data.Float a, Data.Integer b -> Data.Float (a ** float_of_int b)
-(* | Data.Integer n, Data.Complex (a, b) -> Data.Complex (float_of_int n /. a, b)
-| Data.Complex (a, b), Data.Integer n -> Data.Complex (float_of_int n /. a, b)
-| Data.Float n, Data.Complex (a, b) -> Data.Complex (n /. a, b)
-| Data.Complex (a, b), Data.Float n -> Data.Complex (n /. a, b)
-| Data.Complex (a, b), Data.Complex (x, y) -> Data.Complex (a /. x, b /. y) *) ;;
+| Data.Float a, Data.Integer b -> Data.Float (a ** float_of_int b) ;;
 
+(* Compute a whole formula *)
 let rec execute env = function
 | Data.Leaf n -> n
 | Data.Op (l, o, r) -> execute env (Data.Leaf (execute_operation env l o r))
@@ -180,15 +193,19 @@ and execute_operation env l o r = match o with
 | Data.Mod -> mod_ (execute env l, execute env r)
 | Data.Pow -> pow (execute env l, execute env r)
 
-(* Coming soon *)
+(* Apply a custom function *)
 and apply_custom_function env f args =
   try
+    (* Retrieve the function by its name *)
     let func = List.find (fun (fdata : Data.data) -> fdata.name = f) env
+
+    (* Interpret the arguments of the function *)
     in let rec aux formula = function
     | [] -> execute env formula
     | (name, value)::t -> let new_formula = reduce name value formula
       in aux new_formula t
 
+    (* Replace each occurence of an argument name by its formula *)
     and reduce name value = function
     | Data.Func (Data.Custom f, _) when f = name -> Data.Leaf value
     | Data.Func (f, args) -> let new_args = List.map (reduce name value) args
@@ -196,6 +213,7 @@ and apply_custom_function env f args =
     | Data.Op (l, o, r) -> Data.Op (reduce name value l, o, reduce name value r)
     | leaf -> leaf
   
+    (* Check if the function is called with te right number of arguments *)
     in let exp = List.length func.args and got = List.length args
     in if exp <> got
       then raise (WrongArgumentNumber (func.name, exp, got))
