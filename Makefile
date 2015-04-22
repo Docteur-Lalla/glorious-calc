@@ -5,7 +5,7 @@ EXEC=calc
 
 SRCS=data.ml syntax.ml exec.ml main.ml
 
-all: $(EXEC)
+all: $(EXEC) clean
 
 $(EXEC): $(SRCS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
