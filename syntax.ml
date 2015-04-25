@@ -78,6 +78,9 @@ and misc = parser
 
 and parse_function = parser
 | [< 'Ident "sqrt" ; x = parse_formula >] -> Data.Func (Sqrt, [x])
+| [< 'Ident "acos" ; x = parse_formula >] -> Data.Func (Acos, [x])
+| [< 'Ident "asin" ; x = parse_formula >] -> Data.Func (Asin, [x])
+| [< 'Ident "atan" ; x = parse_formula >] -> Data.Func (Atan, [x])
 | [< 'Ident "cos" ; x = parse_formula >] -> Data.Func (Cos, [x])
 | [< 'Ident "sin" ; x = parse_formula >] -> Data.Func (Sin, [x])
 | [< 'Ident "tan" ; x = parse_formula >] -> Data.Func (Tan, [x])

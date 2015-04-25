@@ -61,6 +61,21 @@ let im = function
 | Data.Float f -> Data.Float 0.0
 | Data.Complex (_,i) -> Data.Float i ;;
 
+let acos = function
+| Data.Integer n -> Data.Float (do_to_int Pervasives.acos n)
+| Data.Float f -> Data.Float (Pervasives.acos f)
+| Data.Complex _ -> raise (DomainError ("acos", "real", "complex")) ;;
+
+let asin = function
+| Data.Integer n -> Data.Float (do_to_int Pervasives.asin n)
+| Data.Float f -> Data.Float (Pervasives.asin f)
+| Data.Complex _ -> raise (DomainError ("asin", "real", "complex")) ;;
+
+let atan = function
+| Data.Integer n -> Data.Float (do_to_int Pervasives.atan n)
+| Data.Float f -> Data.Float (Pervasives.atan f)
+| Data.Complex _ -> raise (DomainError ("atan", "real", "complex")) ;;
+
 (*
  * Print a number with some improvements :
  *   A round float is printed as an integer (1.0 -> 1)
@@ -176,6 +191,9 @@ and apply_function env f args = match f with
 | Data.Cos -> cos (List.hd args)
 | Data.Sin -> sin (List.hd args)
 | Data.Tan -> tan (List.hd args)
+| Data.Acos -> acos (List.hd args)
+| Data.Asin -> asin (List.hd args)
+| Data.Atan -> atan (List.hd args)
 | Data.Abs -> abs (List.hd args)
 | Data.Ln -> ln (List.hd args)
 | Data.Log10 -> log10 (List.hd args)

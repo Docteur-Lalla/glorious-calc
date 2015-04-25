@@ -11,6 +11,9 @@ type func =
 | Cos
 | Sin
 | Tan
+| Acos
+| Asin
+| Atan
 | Abs
 | Ln
 | Log10
